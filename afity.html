@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>عافيتي - تعرف على مدربينا الخبراء</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .trainer-card ul {
+            list-style-position: inside;
+            padding-right: 0;
+        }
+        .trainer-card li {
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">عافيتي</div>
+        <nav>
+           <a href="#">الرئيسية</a>
+            <a href="#">المجتمع</a>
+            <a href="#">الاستبيانات </a>
+            <a href="#" class="cta-button">المدربون</a>
+            <a href="#">ما هو عافيتي؟</a>
+          
+        </nav>
+    </header>
+
+    <section class="hero">
+        <h1>تعرف على خبرائنا من أخصائي العلاج الطبيعي</h1>
+        <p>
+            ابحث عن أخصائي العلاج المناسب لك، واحجز جلستك الأولى المجانية
+        </p>
+        <div class="trainer-photos">
+        </div>
+        <button class="cta-button" style="margin-top: 1rem;">ابحث عن مختص</button>
+    </section>
+
+    <div class="search-bar">
+        <input type="text" placeholder="ابحث عن مختص علاج طبيعي مختص في ....">
+    </div>
+
+    <div class="trainers-grid">
+        <div class="trainer-card">
+            <img src="images/adam.png" alt="عبد العزيز">
+            <h3>عبد العزيز</h3>
+            <div class="rating">⭐⭐⭐⭐⭐ 4.9 · 731 تقييم</div>
+            <div class="experience">8 سنوات من الخبرة في التدريب</div>
+            <div class="education">بكالوريوس</div>
+            <ul>
+                <li>إدارة رياضية فردية</li>
+                <li>القوة والتكييف</li>
+                <li>إنقاص الوزن</li>
+            </ul>
+            <button class="book-button" data-trainer="عبد العزيز">احجز مع عبد العزيز</button>
+            <a href="booking.html">عرض الملف الشخصي</a>
+        </div>
+        <div class="trainer-card">
+            <img src="images/nic.png" alt="أحمد خالد">
+            <h3>أحمد خالد</h3>
+            <div class="rating">⭐⭐⭐⭐ 4.0 · 634 تقييم</div>
+            <div class="experience">7 سنوات من الخبرة في التدريب</div>
+            <div class="education">بكالوريوس</div>
+            <ul>
+                <li>التدريب الشامل</li>
+                <li>إنقاص الوزن</li>
+                <li>تدريب القوة</li>
+            </ul>
+            <button class="book-button" data-trainer="أحمد">احجز مع أحمد</button>
+            <a href="booking.html">عرض الملف الشخصي</a>
+        </div>
+        <div class="trainer-card">
+            <img src="images/sam.png" alt="سعود سلطان">
+            <h3>سعود سلطان</h3>
+            <div class="rating">⭐⭐⭐⭐⭐ 4.9 · 756 تقييم</div>
+            <div class="experience">7 سنوات من الخبرة في التدريب</div>
+            <div class="education">ماجستير</div>
+            <ul>
+                <li>تدريب القوة</li>
+                <li>إنقاص الوزن</li>
+                <li>التدريب الوظيفي</li>
+            </ul>
+            <button class="book-button" data-trainer="سعود">احجز مع سعود</button>
+            <a href="booking.html">عرض الملف الشخصي</a>
+        </div>
+    </div>
+
+    <script>
+        // Add any necessary JavaScript here
+        document.querySelector('.search-bar input').addEventListener('keyup', function(e) {
+            // Implement search functionality
+            console.log('جاري البحث عن:', e.target.value);
+        });
+
+        // Add event listeners to all booking buttons
+        document.querySelectorAll('.book-button').forEach(button => {
+            button.addEventListener('click', function() {
+                const trainer = this.getAttribute('data-trainer');
+                window.location.href = `booking.html?trainer=${trainer}`;
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>حجز جلسة مع مدربك</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            direction: rtl;
+            text-align: right;
+        }
+        .calendar-header button {
+            transform: scaleX(-1);
+        }
+        .day:hover:not(.empty) {
+            background-color: #e0e7ff;
+            cursor: pointer;
+        }
+        .day.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .time-slot.active, .time-button.selected {
+            background-color: #3b82f6;
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans min-h-screen flex items-center justify-center">
+    <div class="container mx-auto p-4 max-w-lg">
+        <div class="booking-container bg-white rounded-lg shadow-lg p-6" id="bookingContainer">
+            <div class="calendar-header flex justify-between items-center mb-4">
+                <button id="prevMonth" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition duration-300"> &gt;</button>
+                <h2 id="currentMonth" class="text-xl font-bold"></h2>
+                <button id="nextMonth" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition duration-300">&lt; </button>
+            </div>
+            <div class="calendar grid grid-cols-7 gap-1 mb-6" id="calendar"></div>
+            <h3 class="text-lg font-semibold mb-2">مدة الجلسة</h3>
+            <div class="time-slots flex flex-wrap gap-2 mb-6">
+                <span class="time-slot cursor-pointer border rounded px-3 py-1 hover:bg-blue-100 transition duration-300" data-duration="60">60 دقيقة</span>
+                <span class="time-slot cursor-pointer border rounded px-3 py-1 hover:bg-blue-100 transition duration-300" data-duration="45">45 دقيقة</span>
+                <span class="time-slot cursor-pointer border rounded px-3 py-1 hover:bg-blue-100 transition duration-300" data-duration="30">30 دقيقة</span>
+                <span class="time-slot cursor-pointer border rounded px-3 py-1 hover:bg-blue-100 transition duration-300" data-duration="20">20 دقيقة</span>
+            </div>
+            <h3 class="text-lg font-semibold mb-2">الأوقات المتاحة</h3>
+            <div class="available-times grid grid-cols-4 gap-2 mb-6" id="availableTimes"></div>
+            <button id="submitBooking" class="bg-green-500 text-white px-6 py-2 rounded w-full hidden hover:bg-green-600 transition duration-300">تأكيد الحجز</button>
+        </div>
+
+        <div class="confirmation-container bg-white rounded-lg shadow-lg p-6 mt-4 hidden" id="confirmationContainer">
+            <div class="confirmation-message text-xl font-bold text-green-600 mb-4">تم تأكيد حجزك بنجاح!</div>
+            <div class="booking-details text-lg mb-6" id="bookingDetails"></div>
+            <button class="new-booking-btn bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 transition duration-300" id="newBookingBtn">العودة للصفحة الرئيسية</button>
+        </div>
+    </div>
+
+    <script>
+        const bookingContainer = document.getElementById('bookingContainer');
+        const confirmationContainer = document.getElementById('confirmationContainer');
+        const calendar = document.getElementById('calendar');
+        const currentMonthElement = document.getElementById('currentMonth');
+        const availableTimesElement = document.getElementById('availableTimes');
+        const submitBookingButton = document.getElementById('submitBooking');
+        const bookingDetailsElement = document.getElementById('bookingDetails');
+        const newBookingButton = document.getElementById('newBookingBtn');
+        const daysOfWeek = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+        let currentDate = new Date();
+        let selectedDate = null;
+        let selectedDuration = null;
+        let selectedTime = null;
+
+        function renderCalendar() {
+            calendar.innerHTML = '';
+            
+            // Add days of the week
+            daysOfWeek.forEach(day => {
+                const dayElement = document.createElement('div');
+                dayElement.textContent = day;
+                dayElement.classList.add('font-bold', 'text-center', 'py-2', 'text-sm');
+                calendar.appendChild(dayElement);
+            });
+
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+
+            // Add empty cells for days before the first of the month
+            for (let i = 0; i < firstDay.getDay(); i++) {
+                const emptyDay = document.createElement('div');
+                emptyDay.classList.add('day', 'empty', 'py-2', 'text-center');
+                calendar.appendChild(emptyDay);
+            }
+
+            // Add date numbers
+            for (let i = 1; i <= lastDay.getDate(); i++) {
+                const dateElement = document.createElement('div');
+                dateElement.textContent = i;
+                dateElement.classList.add('day', 'py-2', 'text-center', 'border', 'rounded', 'hover:bg-blue-100', 'transition', 'duration-300', 'text-sm');
+                dateElement.addEventListener('click', () => selectDate(new Date(year, month, i)));
+                calendar.appendChild(dateElement);
+            }
+
+            currentMonthElement.textContent = `${currentDate.toLocaleString('ar-EG', { month: 'long', year: 'numeric' })}`;
+        }
+
+        function selectDate(date) {
+            selectedDate = date;
+            document.querySelectorAll('.day').forEach(day => {
+                day.classList.remove('active');
+                if (day.textContent == date.getDate() && !day.classList.contains('empty')) {
+                    day.classList.add('active');
+                }
+            });
+            updateAvailableTimes();
+            checkAllSelections();
+        }
+
+        function updateAvailableTimes() {
+            if (!selectedDate || !selectedDuration) return;
+            
+            availableTimesElement.innerHTML = '';
+            const times = ['07:00 ص', '08:00 ص', '09:00 ص', '10:00 ص', '11:00 ص', '01:00 م', '02:00 م', '03:00 م'];
+            times.forEach(time => {
+                const timeButton = document.createElement('button');
+                timeButton.textContent = time;
+                timeButton.classList.add('time-button', 'border', 'rounded', 'px-2', 'py-1', 'text-sm', 'hover:bg-blue-100', 'transition', 'duration-300');
+                timeButton.addEventListener('click', () => selectTime(time));
+                availableTimesElement.appendChild(timeButton);
+            });
+        }
+
+        function selectTime(time) {
+            selectedTime = time;
+            document.querySelectorAll('.time-button').forEach(btn => btn.classList.remove('selected'));
+            event.target.classList.add('selected');
+            checkAllSelections();
+        }
+
+        function checkAllSelections() {
+            if (selectedDate && selectedDuration && selectedTime) {
+                submitBookingButton.classList.remove('hidden');
+            } else {
+                submitBookingButton.classList.add('hidden');
+            }
+        }
+
+        document.querySelectorAll('.time-slot').forEach(slot => {
+            slot.addEventListener('click', () => {
+                document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('active'));
+                slot.classList.add('active');
+                selectedDuration = slot.dataset.duration;
+                updateAvailableTimes();
+                checkAllSelections();
+            });
+        });
+
+        document.getElementById('prevMonth').addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            renderCalendar();
+        });
+
+        document.getElementById('nextMonth').addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderCalendar();
+        });
+
+        submitBookingButton.addEventListener('click', () => {
+            bookingDetailsElement.textContent = `تفاصيل الحجز: ${selectedDate.toLocaleDateString('ar-EG')} في ${selectedTime} لمدة ${selectedDuration} دقيقة.`;
+            bookingContainer.classList.add('hidden');
+            confirmationContainer.classList.remove('hidden');
+            // Here you would typically send this data to your server
+        });
+
+        newBookingButton.addEventListener('click', () => {
+            bookingContainer.classList.remove('hidden');
+            confirmationContainer.classList.add('hidden');
+            // Reset selections
+            selectedDate = null;
+            selectedDuration = null;
+            selectedTime = null;
+            document.querySelectorAll('.day, .time-slot, .time-button').forEach(el => el.classList.remove('active', 'selected'));
+            submitBookingButton.classList.add('hidden');
+            renderCalendar();
+        });
+
+        renderCalendar();
+    </script>
+</body>
+</html>
